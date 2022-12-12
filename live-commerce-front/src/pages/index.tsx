@@ -82,6 +82,7 @@ export default function Home() {
         }
         peerConnection.ontrack = (e) => {
           if (remoteVideoRef.current) {
+            console.log(e.streams)
             remoteVideoRef.current.srcObject = e.streams[0]
           }
         }

@@ -26,18 +26,18 @@ public class WebrtcController {
     private String presenterId;
     private WebRtcEndpoint presenterWebRtc;
 
-    @MessageMapping("/app/webrtc/presenter")
-    public synchronized void presenter(
-        @Payload WebrtcDto.PresenterDto dto
+    @MessageMapping("/webrtc/presenter")
+    public void presenter(
+        WebrtcDto.PresenterDto dto
     ) {
-        if (presenterId == null) {
+        if (presenterId == null || true) {
             presenterId = dto.getUserId();
 
             pipeline = kurentoClient.createMediaPipeline();
             presenterWebRtc = new WebRtcEndpoint.Builder(pipeline).build();
             presenterWebRtc.addIceCandidateFoundListener(event -> {
                 try {
-                    String candidate = JsonUtils.toJsonObject(event.getCandidate()).getAsString();
+                    String candidate = JsonUtils.toJson(event.getCandidate());
                     WebrtcDto.CandidateResponseDto candidateResponseDto = WebrtcDto.CandidateResponseDto.builder()
                             .candidate(candidate)
                             .build();
@@ -61,7 +61,7 @@ public class WebrtcController {
         }
     }
 
-    @MessageMapping("/app/webrtc/viewer")
+    @MessageMapping("/webrtc/viewer")
     public void viewer(
         @Payload WebrtcDto.ViewerDto dto
     ) {
@@ -69,7 +69,7 @@ public class WebrtcController {
         viewers.put(dto.getUserId(), webRtcEndpoint);
         webRtcEndpoint.addIceCandidateFoundListener(event -> {
             try {
-                String candidate = JsonUtils.toJsonObject(event.getCandidate()).getAsString();
+                String candidate = JsonUtils.toJson(event.getCandidate());
                 WebrtcDto.CandidateResponseDto candidateResponseDto = WebrtcDto.CandidateResponseDto.builder()
                         .candidate(candidate)
                         .build();
@@ -86,11 +86,11 @@ public class WebrtcController {
                 .answer(answer)
                 .build();
 
-        simpMessagingTemplate.convertAndSend("/topic/webrtc/answer/" + dto.getUserId(), answer);
+        simpMessagingTemplate.convertAndSend("/topic/webrtc/answer/" + dto.getUserId(), viewerResponse);
         webRtcEndpoint.gatherCandidates();
     }
 
-    @MessageMapping("/app/webrtc/onIceCandidate/{userId}")
+    @MessageMapping("/webrtc/onIceCandidate/{userId}")
     public void onIceCandidate(
         @DestinationVariable String userId,
         @Payload WebrtcDto.CandidateRequestDto dto
@@ -104,7 +104,7 @@ public class WebrtcController {
         webRtcEndpoint.addIceCandidate(new IceCandidate(dto.getCandidate(), dto.getSdpMid(), dto.getSdpMLineIndex()));
     }
 
-    @MessageMapping("/app/webrtc/stop")
+    @MessageMapping("/webrtc/stop")
     public void stop() {
 
     }
